@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌐 OpenShare World Chat</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    #messages {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white p-6 font-sans">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-4">🌐 OpenShare World Chat</h1>
+
+    <div id="messages" class="bg-gray-800 p-4 rounded-lg mb-4 space-y-2 h-96 overflow-y-auto border border-gray-700"></div>
+
+    <div class="flex gap-2">
+      <input type="text" id="username" class="w-1/4 px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400" placeholder="Name">
+      <input type="text" id="message" class="w-full px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400" placeholder="Type a message...">
+      <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white font-semibold">Send</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const msgRef = collection(db, "worldchat");
+    const msgQuery = query(msgRef, orderBy("timestamp"));
+
+    onSnapshot(msgQuery, (snapshot) => {
+      const msgContainer = document.getElementById("messages");
+      msgContainer.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const msg = document.createElement("div");
+        msg.innerHTML = `<span class='text-blue-400 font-semibold'>${data.name}:</span> ${data.text}`;
+        msgContainer.appendChild(msg);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      });
+    });
+
+    window.sendMessage = async function() {
+      const name = document.getElementById("username").value.trim() || "Anonymous";
+      const text = document.getElementById("message").value.trim();
+      if (!text) return;
+
+      await addDoc(msgRef, {
+        name,
+        text,
+        timestamp: serverTimestamp()
+      });
+      document.getElementById("message").value = "";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #00f7ff;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.3s ease;
+  min-height: 120px;
+  word-wrap: break-word;
+  width: 100%;
+}
+
+#fileName {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #ccc;
+  word-wrap: break-word;
+  max-width: 100%;
+  text-align: center;
+}
+
+.upload-container h2 {
+  margin-bottom: 25px;
+  font-size: 24px;
+  color: #00f7ff;
+}

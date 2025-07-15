@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload | OpenShare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .upload-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(15px);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 20px #00f7ff44;
+    }
+
+    .upload-container h2 {
+      margin-bottom: 25px;
+      font-size: 24px;
+      color: #00f7ff;
+    }
+
+    .upload-area {
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 2px dashed #00f7ff;
+      padding: 30px;
+      border-radius: 15px;
+      background-color: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: background 0.3s ease;
+      min-height: 120px;
+      text-align: center;
+      position: relative;
+      color: #fff;
+      overflow-wrap: break-word;
+    }
+
+    .upload-area:hover {
+      background-color: rgba(0, 247, 255, 0.1);
+    }
+
+    .upload-area span {
+      font-size: 16px;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #fileName {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #ccc;
+      word-wrap: break-word;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .upload-btn {
+      margin-top: 20px;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 30px;
+      background: #00f7ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .upload-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .progress-bar {
+      margin-top: 20px;
+      background: #111;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: #00f7ff;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="upload-container">
+    <h2>Upload Your File</h2>
+
+    <label class="upload-area" id="customUpload">
+      <span>Click or drag file here to upload</span>
+      <input type="file" id="fileUpload" />
+    </label>
+
+    <div id="fileName"></div>
+
+    <button class="upload-btn" onclick="uploadFile()">Upload</button>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyCdIHFOSiUwDYBhYgXdL8tI_QbuIEDD7AY",
+  authDomain: "studyshare-ac69b.firebaseapp.com",
+  projectId: "studyshare-ac69b",
+  storageBucket: "studyshare-ac69b.firebasestorage.app",
+  messagingSenderId: "287290826448",
+  appId: "1:287290826448:web:c235c33fa8c4ffd06a48d5",
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const db = firebase.database();
+
+    // File selection
+    const fileUpload = document.getElementById("fileUpload");
+    const fileName = document.getElementById("fileName");
+    const progressFill = document.getElementById("progressFill");
+
+    fileUpload.addEventListener("change", function () {
+      if (fileUpload.files.length > 0) {
+        fileName.textContent = "Selected: " + fileUpload.files[0].name;
+      } else {
+        fileName.textContent = "";
+      }
+    });
+
+    // Upload function
+    function uploadFile() {
+      const file = fileUpload.files[0];
+      if (!file) return alert("Please select a file!");
+
+      const storageRef = storage.ref("uploads/" + file.name);
+      const uploadTask = storageRef.put(file);
+
+      uploadTask.on('state_changed',
+        function progress(snapshot) {
+          let percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          progressFill.style.width = percent + "%";
+        },
+        function error(err) {
+          alert("Upload failed: " + err);
+        },
+        function complete() {
+          uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+            db.ref("files").push({
+              name: file.name,
+              url: downloadURL,
+              uploadedAt: new Date().toISOString()
+            });
+            alert("Upload complete!");
+            progressFill.style.width = "0%";
+            fileName.textContent = "";
+            fileUpload.value = "";
+          });
+        }
+      );
+    }
+  </script>
+  
+</body>
+</html>

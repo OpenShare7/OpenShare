@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎧 OpenShare Music</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .active-tab {
+      background-color: #3b82f6;
+      color: white;
+    }
+    #floating-player {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      border-radius: 9999px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-black text-white font-sans min-h-screen p-6 pb-28">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-4xl font-extrabold mb-6 text-center">🎧 OpenShare Music Lounge</h1>
+
+    <!-- Tabs -->
+    <div class="flex flex-wrap justify-center gap-4 mb-8">
+      <button onclick="loadMusic('Trending'); setActive(this);" class="tab-btn px-5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 active-tab">🔥 Trending</button>
+      <button onclick="loadMusic('Lo-Fi'); setActive(this);" class="tab-btn px-5 py-2 rounded-full bg-gray-700 hover:bg-gray-600">🎶 Lo-Fi</button>
+      <button onclick="loadMusic('Focus'); setActive(this);" class="tab-btn px-5 py-2 rounded-full bg-gray-700 hover:bg-gray-600">🧠 Focus</button>
+      <button onclick="loadMusic('Instrumental'); setActive(this);" class="tab-btn px-5 py-2 rounded-full bg-gray-700 hover:bg-gray-600">🎻 Instrumental</button>
+    </div>
+
+    <!-- Music Grid -->
+    <div id="musicGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
+  </div>
+
+  <!-- Floating Audio Player -->
+  <div id="floating-player" class="hidden w-full max-w-2xl px-4 py-3 bg-gray-800 bg-opacity-90 rounded-full fixed bottom-6 left-1/2 transform -translate-x-1/2 shadow-lg flex items-center justify-between gap-4 z-50">
+    <div class="flex items-center gap-3">
+      <div class="bg-gray-700 p-2 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13" />
+        </svg>
+      </div>
+      <div class="leading-tight">
+        <div id="nowTitle" class="text-white font-semibold text-sm">Track Title</div>
+        <div id="nowArtist" class="text-gray-300 text-xs">Artist</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="prevTrack()" class="text-white hover:text-blue-400 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M11.5 10L18 5.5v9L11.5 10zM2 5h2v10H2V5z" />
+        </svg>
+      </button>
+      <audio id="nowAudio" controls class="w-40 sm:w-52 md:w-60"></audio>
+      <button onclick="nextTrack()" class="text-white hover:text-blue-400 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M8.5 10L2 5.5v9L8.5 10zM18 5h-2v10h2V5z" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const musicData = [
+      {
+        title: "Pal Pal x Haseen",
+        artist: "OpenShare Musics",
+        category: "Trending",
+        musicURL: "assets/music/PalPalHaseen.mp3",
+        coverURL: "assets/images/palpalcover.jpg"
+      }
+    ];
+
+    let currentTrackIndex = 0;
+
+    function loadMusic(category = "Trending") {
+      const musicGrid = document.getElementById("musicGrid");
+      musicGrid.innerHTML = "";
+
+      musicData
+        .filter(m => m.category === category)
+        .forEach((data, index) => {
+          const card = document.createElement("div");
+          card.className = "glass-card rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition border border-gray-700";
+          card.innerHTML = `
+            <img src="${data.coverURL}" alt="${data.title}" class="w-full h-48 object-cover" />
+            <div class="p-4">
+              <h3 class="text-xl font-bold text-white">${data.title}</h3>
+              <p class="text-sm text-gray-300">by ${data.artist}</p>
+              <button class='play-btn bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 mt-3 rounded' 
+                data-index="${index}">
+                ▶️ Play
+              </button>
+            </div>
+          `;
+          musicGrid.appendChild(card);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadMusic("Trending");
+
+      document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("play-btn")) {
+          const index = parseInt(e.target.dataset.index);
+          playTrack(index);
+        }
+      });
+    });
+
+    function playTrack(index) {
+      if (!musicData[index]) return;
+      currentTrackIndex = index;
+      const track = musicData[index];
+      document.getElementById("nowTitle").textContent = track.title;
+      document.getElementById("nowArtist").textContent = track.artist;
+      const audio = document.getElementById("nowAudio");
+      audio.src = track.musicURL;
+      audio.play();
+      document.getElementById("floating-player").classList.remove("hidden");
+    }
+
+    function nextTrack() {
+      if (currentTrackIndex < musicData.length - 1) {
+        playTrack(currentTrackIndex + 1);
+      }
+    }
+
+    function prevTrack() {
+      if (currentTrackIndex > 0) {
+        playTrack(currentTrackIndex - 1);
+      }
+    }
+
+    function setActive(clicked) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+      clicked.classList.add('active-tab');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</div>
+
+  <title>OpenShare - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(130deg, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: gradient 20s ease infinite;
+    }
+    @keyframes gradient {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    .glass {
+      backdrop-filter: blur(14px);
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    query,
+    orderBy,
+    limit,
+    onSnapshot,
+    where
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCdIHFOSiUwDYBhYgXdL8tI_QbuIEDD7AY",
+  authDomain: "studyshare-ac69b.firebaseapp.com",
+  projectId: "studyshare-ac69b",
+  storageBucket: "studyshare-ac69b.firebasestorage.app",
+  messagingSenderId: "287290826448",
+  appId: "1:287290826448:web:c235c33fa8c4ffd06a48d5",
+  measurementId: "G-5E9FMZKJ0D"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const resourcesRef = collection(db, "resources");
+
+  // Trending
+  const trendingContainer = document.getElementById("trending");
+  const trendingQuery = query(resourcesRef, orderBy("downloadCount", "desc"), limit(3));
+  onSnapshot(trendingQuery, (snapshot) => {
+    trendingContainer.innerHTML = "";
+    snapshot.forEach((doc) => trendingContainer.appendChild(makeCard(doc.data())));
+  });
+
+  // Recently Uploaded
+  const recentContainer = document.getElementById("recent");
+  const recentQuery = query(resourcesRef, orderBy("uploadedAt", "desc"), limit(6));
+  onSnapshot(recentQuery, (snapshot) => {
+    recentContainer.innerHTML = "";
+    snapshot.forEach((doc) => recentContainer.appendChild(makeCard(doc.data())));
+  });
+
+  // Subject Filter
+  const subjectContainer = document.getElementById("subjectResults");
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const subject = btn.dataset.subject;
+      const subjectQuery = query(resourcesRef, where("subject", "==", subject), orderBy("uploadedAt", "desc"), limit(6));
+      onSnapshot(subjectQuery, (snapshot) => {
+        subjectContainer.innerHTML = "";
+        if (snapshot.empty) {
+          subjectContainer.innerHTML = "<p class='text-sm text-gray-400'>No files found for " + subject + ".</p>";
+        } else {
+          snapshot.forEach((doc) => subjectContainer.appendChild(makeCard(doc.data())));
+        }
+      });
+    });
+  });
+
+  // Card Builder
+  function makeCard(data) {
+    const card = document.createElement("div");
+    card.className = "glass rounded-xl p-5";
+    card.innerHTML = `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl">📄</span>
+        <div>
+          <h3 class="font-bold">${data.title}</h3>
+          <p class="text-sm text-gray-300">Class ${data.class} • ${data.subject}</p>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm mb-3">${data.description || "No description."}</p>
+      <div class="flex items-center justify-between text-sm text-gray-400">
+        <span>⬇️ ${data.downloadCount || 0} downloads</span>
+        <a href="${data.fileURL}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-medium">Download</a>
+      </div>
+    `;
+    return card;
+  }
+</script>
+
+<body class="text-white font-sans flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="bg-gray-900 text-white w-64 p-6 min-h-screen flex flex-col justify-between">
+  <div>
+      <span class="text-xl font-extrabold text-white">OpenShare</span>
+    </div>
+
+    <!-- Sidebar Links -->
+    <nav class="flex flex-col space-y-4 text-sm font-medium">
+      <a href="home.html" class="hover:text-blue-400">🏠 Home</a>
+      <a href="upload.html" class="hover:text-blue-400">⏫ Upload</a>
+      <a href="ask.html" class="hover:text-blue-400">❓ Ask Question</a>
+      <a href="answer.html" class="hover:text-blue-400">🙋 Answer Doubts</a>
+      <a href="doubts.html" class="hover:text-blue-400">🧠 My Doubts</a>
+      <a href="books.html" class="hover:text-blue-400">📚 Books</a>
+      <a href="music.html" class="hover:text-blue-400">🎵 OpenShare Music</a>
+      <a href="downloads.html" class="hover:text-blue-400">⬇️ My Downloads</a>
+      <a href="myuploads.html" class="hover:text-blue-400">📤 My Uploads</a>
+      <a href="premium.html" class="hover:text-blue-400">💰 Paid Material</a>
+    </nav>
+  </div>
+
+  <footer class="text-xs text-gray-500 mt-10">© 2025 OpenShare</footer>
+  <footer class="text-xs text-gray-500 mt-10">Made with ❤️ by Aman Rajput</footer>
+</aside>
+
+
+  <!-- Main Content -->
+  <main class="flex-1 p-8 space-y-10 overflow-y-auto">
+
+    <!-- Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+  <input type="text" placeholder="Search materials..." class="bg-gray-800 text-white px-4 py-2 rounded w-full sm:max-w-md" />
+
+  <a href="https://openshare.live/app.apk" download class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg transition">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4m-6 8h8" />
+  </svg>
+  Get OpenShare App
+</a>
+
+</div>
+
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-4">
+      <select class="bg-gray-800 px-4 py-2 rounded-md text-sm">
+        <option>All Classes</option>
+        <option>Class 10</option>
+        <option>Class 11</option>
+        <option>Class 12</option>
+      </select>
+      <select class="bg-gray-800 px-4 py-2 rounded-md text-sm">
+        <opti
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Initialize Firestore
+const db = getFirestore(app);
+
+// Target section to insert resource cards
+const grid = document.querySelector("section.grid");
+
+// Real-time fetch from 'resources'
+const q = query(collection(db, "resources"), orderBy("uploadedAt", "desc"));
+
+onSnapshot(q, (snapshot) => {
+  grid.innerHTML = ""; // clear existing
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+
+    const card = document.createElement("div");
+    card.className = "glass rounded-xl p-5";
+    card.innerHTML = `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl">📄</span>
+        <div>
+          <h3 class="font-bold">${data.title}</h3>
+          <p class="text-sm text-gray-300">Class ${data.class} • ${data.subject}</p>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm mb-3">${data.description || "No description."}</p>
+      <div class="flex items-center justify-between text-sm text-gray-400">
+        <span>⬇️ ${data.downloadCount || 0} downloads</span>
+        <a href="${data.fileURL}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-medium">Download</a>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+});
